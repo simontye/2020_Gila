@@ -240,7 +240,7 @@ transition_values <- function(from, to, steps = 10,
 }
 
 ###############################################################
-### Rayshdaer - Version 1
+### Rayshdaer - Test
 ###############################################################
 
 # Load geotiff file
@@ -267,7 +267,7 @@ Gila.map %>%
 #render_snapshot(clear=TRUE)
 
 ###############################################################
-### Rayshader - Version 2
+### Rayshader - Full version
 ###############################################################
 
 # Define bounding box
@@ -303,41 +303,64 @@ elev_matrix <- matrix(
   nrow = ncol(elev_img), ncol = nrow(elev_img)
 )
 
-# Calculate rayshader layers
+# Define shadow layers
 ambmat <- ambient_shade(elev_matrix, zscale = 30)
 raymat <- ray_shade(elev_matrix, zscale = 30, lambert = TRUE)
 
-# Overlay map image for the terrain
+# Overlay satellite image
 overlay_file <- "terrain.png"
 get_arcgis_map_image(bbox, map_type = "World_Imagery", file = overlay_file,
                      width = image_size$width, height = image_size$height, 
                      sr_bbox = 4326)
 overlay_img <- png::readPNG(overlay_file)
 
-# 2D plot with map overlay
-#elev_matrix %>%
-#  sphere_shade(texture = "imhof4") %>%
-#  add_water(watermap, color = "imhof4") %>%
-#  add_shadow(raymat, max_darken = 0.5) %>%
-#  add_shadow(ambmat, max_darken = 0.5) %>%
-#  add_overlay(overlay_img, alphalayer = 0.5) %>%
-#  plot_map()
-
 ###############################################################
 
 # Read shapefile
-Gila.shape <- st_read("Gila_Rivers.shp")
-Gila.shape2 <-raster(Gila.shape)
+#Gila.shape <- st_read("Gila_Rivers.shp")
+#Gila.shape2 <-raster(Gila.shape)
 
-# Convert NHD to SpatialLines
-river = rgdal::readOGR("Gila_Rivers.shp")
-river = as(river, "SpatialLines")
+# Import river channels
+river.1935 = rgdal::readOGR("1935_water_final.shp")
+river.1950 = rgdal::readOGR("1950_water.shp")
+river.1965 = rgdal::readOGR("1965_water_final.shp")
+river.1974 = rgdal::readOGR("1974_water_final.shp")
+#river.1980 = rgdal::readOGR("1980_water.shp")
+river.1982 = rgdal::readOGR("1982_water_final.shp")
+river.1986 = rgdal::readOGR("1986_water_final.shp")
+river.2006 = rgdal::readOGR("2006_water_final.shp")
+river.2009 = rgdal::readOGR("2009_water_final.shp")
+river.2014 = rgdal::readOGR("2014_water_final.shp")
+river.2016 = rgdal::readOGR("2016_water_final.shp")
+
+# Convert to SpatialLines
+river.1935 = as(river.1935, "SpatialLines")
+river.1950 = as(river.1950, "SpatialLines")
+river.1965 = as(river.1965, "SpatialLines")
+river.1974 = as(river.1974, "SpatialLines")
+#river.1980 = as(river.1980, "SpatialLines")
+river.1982 = as(river.1982, "SpatialLines")
+river.1986 = as(river.1986, "SpatialLines")
+river.2006 = as(river.2006, "SpatialLines")
+river.2009 = as(river.2009, "SpatialLines")
+river.2014 = as(river.2014, "SpatialLines")
+river.2016 = as(river.2016, "SpatialLines")
 
 # Reproject coordinate system
-river <- spTransform(river, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1935 <- spTransform(river.1935, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1950 <- spTransform(river.1950, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1965 <- spTransform(river.1965, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1974 <- spTransform(river.1974, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+#river.1980 <- spTransform(river.1980, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1982 <- spTransform(river.1982, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.1986 <- spTransform(river.1986, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.2006 <- spTransform(river.2006, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.2009 <- spTransform(river.2009, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.2014 <- spTransform(river.2014, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+river.2016 <- spTransform(river.2016, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
 # Create empty raster
-r = raster()
+r         = raster()
 extent(r) = extent(elev_img)
 dim(r)    = dim(elev_img)
 res(r)    = res(elev_img)
@@ -348,28 +371,105 @@ values(r) = 0
 #river2 <- aggregate(river, fact = 10)
 #r2 <- aggregate(r, fact = 10)
 
-# Combine river with empty raster; water = 1, terrain = 0
-rr = rasterize(river, r)
-values(rr)[is.na(values(rr))] = 0
-values(rr)[values(rr) != 0] = 1
+# Combine 1935 channel with empty raster
+r.1935 = rasterize(river.1935, r)
+values(r.1935)[is.na(values(r.1935))] = 0
+values(r.1935)[values(r.1935) != 0] = 1
+water.1935 = matrix(raster::extract(r.1935,raster::extent(r.1935),buffer = 1000), nrow = ncol(r.1935),ncol = nrow(r.1935))
+water.1935 = apply(water.1935, 2, rev)
 
-# Create water matrix
-water = matrix(raster::extract(rr,raster::extent(rr),buffer = 1000), nrow = ncol(rr),ncol = nrow(rr))
+# Combine 1950 channel with empty raster
+r.1950 = rasterize(river.1950, r)
+values(r.1950)[is.na(values(r.1950))] = 0
+values(r.1950)[values(r.1950) != 0] = 1
+water.1950 = matrix(raster::extract(r.1950,raster::extent(r.1950),buffer = 1000), nrow = ncol(r.1950),ncol = nrow(r.1950))
+water.1950 = apply(water.1950, 2, rev)
 
-# Horizontally flip terrain image
-water = apply(water, 2, rev)
+# Combine 1965 channel with empty raster
+r.1965 = rasterize(river.1965, r)
+values(r.1965)[is.na(values(r.1965))] = 0
+values(r.1965)[values(r.1965) != 0] = 1
+water.1965 = matrix(raster::extract(r.1965,raster::extent(r.1965),buffer = 1000), nrow = ncol(r.1965),ncol = nrow(r.1965))
+water.1965 = apply(water.1965, 2, rev)
+
+# Combine 1974 channel with empty raster
+r.1974 = rasterize(river.1974, r)
+values(r.1974)[is.na(values(r.1974))] = 0
+values(r.1974)[values(r.1974) != 0] = 1
+water.1974 = matrix(raster::extract(r.1974,raster::extent(r.1974),buffer = 1000), nrow = ncol(r.1974),ncol = nrow(r.1974))
+water.1974 = apply(water.1974, 2, rev)
+
+# Combine 1980 channel with empty raster
+# r.1980 = rasterize(river.1980, r)
+# values(r.1980)[is.na(values(r.1980))] = 0
+# values(r.1980)[values(r.1980) != 0] = 1
+# water.1980 = matrix(raster::extract(r.1980,raster::extent(r.1980),buffer = 1000), nrow = ncol(r.1980),ncol = nrow(r.1980))
+# water.1980 = apply(water.1980, 2, rev)
+
+# Combine 1982 channel with empty raster
+r.1982 = rasterize(river.1982, r)
+values(r.1982)[is.na(values(r.1982))] = 0
+values(r.1982)[values(r.1982) != 0] = 1
+water.1982 = matrix(raster::extract(r.1982,raster::extent(r.1982),buffer = 1000), nrow = ncol(r.1982),ncol = nrow(r.1982))
+water.1982 = apply(water.1982, 2, rev)
+
+# Combine 1986 channel with empty raster
+r.1986 = rasterize(river.1986, r)
+values(r.1986)[is.na(values(r.1986))] = 0
+values(r.1986)[values(r.1986) != 0] = 1
+water.1986 = matrix(raster::extract(r.1986,raster::extent(r.1986),buffer = 1000), nrow = ncol(r.1986),ncol = nrow(r.1986))
+water.1986 = apply(water.1986, 2, rev)
+
+# Combine 2006 channel with empty raster
+r.2006 = rasterize(river.2006, r)
+values(r.2006)[is.na(values(r.2006))] = 0
+values(r.2006)[values(r.2006) != 0] = 1
+water.2006 = matrix(raster::extract(r.2006,raster::extent(r.2006),buffer = 1000), nrow = ncol(r.2006),ncol = nrow(r.2006))
+water.2006 = apply(water.2006, 2, rev)
+
+# Combine 2009 channel with empty raster
+r.2009 = rasterize(river.2009, r)
+values(r.2009)[is.na(values(r.2009))] = 0
+values(r.2009)[values(r.2009) != 0] = 1
+water.2009 = matrix(raster::extract(r.2009,raster::extent(r.2009),buffer = 1000), nrow = ncol(r.2009),ncol = nrow(r.2009))
+water.2009 = apply(water.2009, 2, rev)
+
+# Combine 2014 channel with empty raster
+r.2014 = rasterize(river.2014, r)
+values(r.2014)[is.na(values(r.2014))] = 0
+values(r.2014)[values(r.2014) != 0] = 1
+water.2014 = matrix(raster::extract(r.2014,raster::extent(r.2014),buffer = 1000), nrow = ncol(r.2014),ncol = nrow(r.2014))
+water.2014 = apply(water.2014, 2, rev)
+
+# Combine 2016 channel with empty raster
+r.2016 = rasterize(river.2016, r)
+values(r.2016)[is.na(values(r.2016))] = 0
+values(r.2016)[values(r.2016) != 0] = 1
+water.2016 = matrix(raster::extract(r.2016,raster::extent(r.2016),buffer = 1000), nrow = ncol(r.2016),ncol = nrow(r.2016))
+water.2016 = apply(water.2016, 2, rev)
 
 # Check dimensions
-dim(water) == dim(elev_matrix)
+#dim(water) == dim(elev_matrix)
 
 # 2D plot with terrain and river
 elev_matrix %>%
   sphere_shade(texture = "desert") %>%
-  add_water(water, color = "lightblue") %>%
+  add_water(water.1935, color = "blue") %>%
+  add_water(water.1950, color = "red") %>%
+  add_water(water.1965, color = "green") %>%
+  add_water(water.1974, color = "orange") %>%
+  #add_water(water.1980, color = "blueviolet") %>%
+  add_water(water.1982, color = "darkgoldenrod") %>%
+  add_water(water.1986, color = "darkcyan") %>%
+  add_water(water.1986, color = "coral") %>%
+  add_water(water.2006, color = "darkred") %>%
+  add_water(water.2009, color = "darkorchid") %>%
+  add_water(water.2014, color = "dodgerblue") %>%
+  add_water(water.2016, color = "darkslategray") %>%
   add_shadow(raymat, max_darken = 0.5) %>%
   add_shadow(ambmat, max_darken = 0.5) %>%
   add_overlay(overlay_img, alphalayer = 0.5) %>%
-  plot_map()
+  plot_3d(elev_matrix, theta =-30)
 
 # 3D plot with terrain and river
 zscale <- 10
@@ -382,18 +482,40 @@ elev_matrix %>%
   add_shadow(ambmat, max_darken = 0.5) %>%
   plot_3d(elev_matrix, zscale = zscale, windowsize = c(1200, 1000),
           water = TRUE, soliddepth = -max(elev_matrix)/zscale, wateralpha = 0,
-          theta = 25, phi = 30, zoom = 0.65, fov = 60)
+          theta = -30, phi = 30, zoom = 0.3, fov = 60)
 render_snapshot()
 
 ###############################################################
 ### GIF
 
-# montery water gif ====
-elev_matrix <- montereybay
+
+n_frames <- 5
+theta <- transition_values(from = -30, to = -30, steps = n_frames, 
+                           one_way = TRUE, type = "lin")
+phi <- transition_values(from = 30, to = 30, steps = n_frames, 
+                         one_way = FALSE, type = "cos")
+zoom <- transition_values(from = 0.3, to = 0.3, steps = n_frames, 
+                          one_way = FALSE, type = "cos")
+
+
+zscale <- 10
+elev_matrix %>% 
+  sphere_shade(texture = "desert") %>% 
+  add_water(water, color = "lightblue") %>%
+  add_overlay(overlay_img, alphalayer = 0.5) %>%
+  add_shadow(raymat, 0.4) %>%
+  add_shadow(ambmat, 0.4) %>%
+  save_3d_gif(elev_matrix, file = "gila.gif", duration = 6,
+              zscale = zscale, windowsize = c(1200, 1000), wateralpha = 0,
+              water = TRUE, soliddepth = -max(elev_matrix)/1000, 
+              theta = theta, phi = phi, zoom = zoom, fov = 60)
+ # montery water gif ====
+#elev_matrix <- montereybay
 n_frames <- 180
 zscale <- 50
+
 # frame transition variables
-waterdepthvalues <- min(elev_matrix)/2 - min(elev_matrix)/2 * cos(seq(0,2*pi,length.out = n_frames))
+#waterdepthvalues <- min(elev_matrix)/2 - min(elev_matrix)/2 * cos(seq(0,2*pi,length.out = n_frames))
 thetavalues <- -90 + 45 * cos(seq(0, 2*pi, length.out = n_frames))
 # shadow layers
 ambmat <- ambient_shade(elev_matrix, zscale = zscale)
@@ -408,9 +530,8 @@ for (i in seq_len(frames)) {
     add_shadow(ambmat, 0.5) %>%
     add_shadow(raymat, 0.5) %>%
     plot_3d(elev_matrix, solid = TRUE, shadow = TRUE, zscale = zscale, 
-            water = TRUE, watercolor = "imhof3", wateralpha = 0.8, 
-            waterlinecolor = "#ffffff", waterlinealpha = 0.5,
-            waterdepth = waterdepthvalues[i]/zscale, 
+            water = TRUE, watercolor = "lightblue", wateralpha = 0.8, 
+            waterlinecolor = "lightblue", waterlinealpha = 0.5,
             theta = thetavalues[i], phi = 45)
   render_snapshot(img_frames[i])
   rgl::clear3d()
