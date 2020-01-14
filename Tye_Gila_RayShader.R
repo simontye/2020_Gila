@@ -198,8 +198,7 @@ save_3d_gif <- function(hillshade, heightmap, file, duration = 5, ...) {
   
   # build gif
   message("Generating .gif...")
-  magick::image_write_gif(magick::image_read(img_frames), 
-                          path = file, delay = duration/n_frames)
+  magick::image_write_gif(magick::image_read(img_frames), path = file, delay = duration/n_frames)
   message("Done!")
   invisible(file)
 }
@@ -214,8 +213,7 @@ plot_3d_tidy_eval <- function(hillshade, ...) {
 ###############################################################
 
 # Create a numeric vector of transition values
-transition_values <- function(from, to, steps = 10, 
-                              one_way = FALSE, type = "cos") {
+transition_values <- function(from, to, steps = 10, one_way = FALSE, type = "cos") {
   if (!(type %in% c("cos", "lin")))
     stop("type must be one of: 'cos', 'lin'")
   
@@ -242,38 +240,50 @@ transition_values <- function(from, to, steps = 10,
 ###############################################################
 ### Rayshdaer - Test
 ###############################################################
-
-# Load geotiff file
-loadzip = tempfile() 
-Gila = raster::raster("Gila_2016.tif")
-unlink(loadzip)
-
-# Convert geotiff to raster
-Gila.raster <- raster("Gila_2016.tif")
-
-# Resample raster file to smaller resolution
-Gila.raster2 <- aggregate(Gila.raster, fact = 50)
-
-# Convert raster to matrix for further plotting
-Gila.map = raster_to_matrix(Gila.raster2)
-
-# Create sample 2D plot
-Gila.map %>%
-  sphere_shade(texture = "desert") %>%
-  add_shadow(ray_shade(Gila.map)) %>%
-  add_shadow(ambient_shade(Gila.map)) %>%
-  plot_map()
-#Sys.sleep(0.2)
-#render_snapshot(clear=TRUE)
-
+#
+## Load geotiff file
+#loadzip = tempfile() 
+#Gila = raster::raster("Gila_2016.tif")
+#unlink(loadzip)
+#
+## Convert geotiff to raster
+#Gila.raster <- raster("Gila_2016.tif")
+#
+## Resample raster file to smaller resolution
+#Gila.raster2 <- aggregate(Gila.raster, fact = 50)
+#
+## Convert raster to matrix for further plotting
+#Gila.map = raster_to_matrix(Gila.raster2)
+#
+## Create sample 2D plot
+#Gila.map %>%
+#  sphere_shade(texture = "desert") %>%
+#  add_shadow(ray_shade(Gila.map)) %>%
+#  add_shadow(ambient_shade(Gila.map)) %>%
+#  plot_map()
+##Sys.sleep(0.2)
+##render_snapshot(clear=TRUE)
+#
 ###############################################################
 ### Rayshader - Full version
 ###############################################################
 
-# Define bounding box
+## Define bounding box (channels only)
+#bbox <- list(
+#  p1 = list(long = -108.627, lat = 32.923), # bottom left
+#  p2 = list(long = -108.514, lat = 33.071) # top right
+#)
+
+## Define bounding box (video version)
+#bbox <- list(
+#  p1 = list(long = -108.627, lat = 32.923), # bottom left
+#  p2 = list(long = -108.401, lat = 33.219) # top right
+#)
+
+# Define bounding box (video version)
 bbox <- list(
-  p1 = list(long = -108.631, lat = 32.898), # bottom left
-  p2 = list(long = -108.469, lat = 33.077) # top right
+  p1 = list(long = -108.677, lat = 32.873), # bottom left
+  p2 = list(long = -108.351, lat = 33.269) # top right
 )
 
 # Display bounding box
@@ -454,111 +464,120 @@ water.2016 = apply(water.2016, 2, rev)
 # 2D plot with terrain and river
 elev_matrix %>%
   sphere_shade(texture = "desert") %>%
-  add_water(water.1935, color = "blue") %>%
-  add_water(water.1950, color = "red") %>%
-  add_water(water.1965, color = "green") %>%
-  add_water(water.1974, color = "orange") %>%
+  add_overlay(overlay_img, alphalayer = 0.8) %>%
+  add_water(water.1935, color = "#5e4fa2") %>%
+  add_water(water.1950, color = "#3288bd") %>%
+  add_water(water.1965, color = "#66c2a5") %>%
+  add_water(water.1974, color = "#abdda4") %>%
   #add_water(water.1980, color = "blueviolet") %>%
-  add_water(water.1982, color = "darkgoldenrod") %>%
-  add_water(water.1986, color = "darkcyan") %>%
-  add_water(water.1986, color = "coral") %>%
-  add_water(water.2006, color = "darkred") %>%
-  add_water(water.2009, color = "darkorchid") %>%
-  add_water(water.2014, color = "dodgerblue") %>%
-  add_water(water.2016, color = "darkslategray") %>%
+  add_water(water.1982, color = "#e6f598") %>%
+  add_water(water.1986, color = "#ffffbf") %>%
+  add_water(water.1986, color = "#fee08b") %>%
+  add_water(water.2006, color = "#fdae61") %>%
+  add_water(water.2009, color = "#f46d43") %>%
+  add_water(water.2014, color = "#d53e4f") %>%
+  add_water(water.2016, color = "#9e0142") %>%
   add_shadow(raymat, max_darken = 0.5) %>%
   add_shadow(ambmat, max_darken = 0.5) %>%
-  add_overlay(overlay_img, alphalayer = 0.5) %>%
-  plot_3d(elev_matrix, theta =-30)
+  plot_3d(elev_matrix, theta =-30, zscale = 10)
 
-# 3D plot with terrain and river
-zscale <- 10
-rgl::clear3d()
-elev_matrix %>% 
-  sphere_shade(texture = "desert") %>% 
-  add_water(water, color = "lightblue") %>%
-  add_overlay(overlay_img, alphalayer = 0.5) %>%
-  add_shadow(raymat, max_darken = 0.5) %>%
-  add_shadow(ambmat, max_darken = 0.5) %>%
-  plot_3d(elev_matrix, zscale = zscale, windowsize = c(1200, 1000),
-          water = TRUE, soliddepth = -max(elev_matrix)/zscale, wateralpha = 0,
-          theta = -30, phi = 30, zoom = 0.3, fov = 60)
-render_snapshot()
+#rgl::clear3d()
 
 ###############################################################
 ### GIF
 
-
-n_frames <- 5
-theta <- transition_values(from = -30, to = -30, steps = n_frames, 
+# Animation settings
+n_frames <- 10
+theta <- transition_values(from = -35, to = -35, steps = n_frames, 
                            one_way = TRUE, type = "lin")
-phi <- transition_values(from = 30, to = 30, steps = n_frames, 
-                         one_way = FALSE, type = "cos")
-zoom <- transition_values(from = 0.3, to = 0.3, steps = n_frames, 
-                          one_way = FALSE, type = "cos")
+phi <- transition_values(from = 15, to = 15, steps = n_frames, 
+                         one_way = TRUE, type = "cos")
+zoom <- transition_values(from = 0.1, to = 0.4, steps = n_frames, 
+                          one_way = TRUE, type = "cos")
 
-
-zscale <- 10
-elev_matrix %>% 
-  sphere_shade(texture = "desert") %>% 
-  add_water(water, color = "lightblue") %>%
-  add_overlay(overlay_img, alphalayer = 0.5) %>%
-  add_shadow(raymat, 0.4) %>%
-  add_shadow(ambmat, 0.4) %>%
+# Test
+elev_matrix %>%
+  sphere_shade(texture = "desert") %>%
+  add_overlay(overlay_img, alphalayer = 0.8) %>%
+  add_water(water.1935, color = "#5e4fa2") %>%
+  add_water(water.1950, color = "#3288bd") %>%
+  add_water(water.1965, color = "#66c2a5") %>%
+  add_water(water.1974, color = "#abdda4") %>%
+  #add_water(water.1980, color = "blueviolet") %>%
+  add_water(water.1982, color = "#e6f598") %>%
+  add_water(water.1986, color = "#ffffbf") %>%
+  add_water(water.1986, color = "#fee08b") %>%
+  add_water(water.2006, color = "#fdae61") %>%
+  add_water(water.2009, color = "#f46d43") %>%
+  add_water(water.2014, color = "#d53e4f") %>%
+  add_water(water.2016, color = "#9e0142") %>%
+  add_shadow(raymat, max_darken = 0.5) %>%
+  add_shadow(ambmat, max_darken = 0.5) %>%
   save_3d_gif(elev_matrix, file = "gila.gif", duration = 6,
-              zscale = zscale, windowsize = c(1200, 1000), wateralpha = 0,
+              zscale = 20, windowsize = c(1000, 1000), wateralpha = 0,
               water = TRUE, soliddepth = -max(elev_matrix)/1000, 
               theta = theta, phi = phi, zoom = zoom, fov = 60)
- # montery water gif ====
-#elev_matrix <- montereybay
-n_frames <- 180
-zscale <- 50
-
-# frame transition variables
-#waterdepthvalues <- min(elev_matrix)/2 - min(elev_matrix)/2 * cos(seq(0,2*pi,length.out = n_frames))
-thetavalues <- -90 + 45 * cos(seq(0, 2*pi, length.out = n_frames))
-# shadow layers
-ambmat <- ambient_shade(elev_matrix, zscale = zscale)
-raymat <- ray_shade(elev_matrix, zscale = zscale, lambert = TRUE)
-
-# generate .png frame images
-img_frames <- paste0("drain", seq_len(n_frames), ".png")
-for (i in seq_len(frames)) {
-  message(paste(" - image", i, "of", n_frames))
-  elev_matrix %>%
-    sphere_shade(texture = "imhof1") %>%
-    add_shadow(ambmat, 0.5) %>%
-    add_shadow(raymat, 0.5) %>%
-    plot_3d(elev_matrix, solid = TRUE, shadow = TRUE, zscale = zscale, 
-            water = TRUE, watercolor = "lightblue", wateralpha = 0.8, 
-            waterlinecolor = "lightblue", waterlinealpha = 0.5,
-            theta = thetavalues[i], phi = 45)
-  render_snapshot(img_frames[i])
-  rgl::clear3d()
-}
-
-# build gif
-magick::image_write_gif(magick::image_read(img_frames), 
-                        path = "montereybay.gif", 
-                        delay = 6/n_frames)
-
-# calculate input vectors for gif frames
-n_frames <- 180
-waterdepths <- transition_values(from = 0, to = min(montereybay), steps = n_frames) 
-thetas <- transition_values(from = -45, to = -135, steps = n_frames)
-# generate gif
-zscale <- 50
-montereybay %>% 
-  sphere_shade(texture = "imhof1", zscale = zscale) %>%
-  add_shadow(ambient_shade(montereybay, zscale = zscale), 0.5) %>%
-  add_shadow(ray_shade(montereybay, zscale = zscale, lambert = TRUE), 0.5) %>%
-  save_3d_gif(montereybay, file = "montereybay.gif", duration = 6,
-              solid = TRUE, shadow = TRUE, water = TRUE, zscale = zscale,
-              watercolor = "imhof3", wateralpha = 0.8, 
-              waterlinecolor = "#ffffff", waterlinealpha = 0.5,
-              waterdepth = waterdepths/zscale, 
-              theta = thetas, phi = 45)
 
 
 
-
+# # montery water gif ====
+##elev_matrix <- montereybay
+#n_frames <- 180
+#zscale <- 50
+#
+## frame transition variables
+##waterdepthvalues <- min(elev_matrix)/2 - min(elev_matrix)/2 * cos(seq(0,2*pi,length.out = n_frames))
+#thetavalues <- -90 + 45 * cos(seq(0, 2*pi, length.out = n_frames))
+## shadow layers
+#ambmat <- ambient_shade(elev_matrix, zscale = zscale)
+#raymat <- ray_shade(elev_matrix, zscale = zscale, lambert = TRUE)
+#
+## generate .png frame images
+#img_frames <- paste0("drain", seq_len(n_frames), ".png")
+#for (i in seq_len(frames)) {
+#  message(paste(" - image", i, "of", n_frames))
+#  elev_matrix %>%
+#    sphere_shade(texture = "imhof1") %>%
+#    add_shadow(ambmat, 0.5) %>%
+#    add_shadow(raymat, 0.5) %>%
+#    plot_3d(elev_matrix, solid = TRUE, shadow = TRUE, zscale = zscale, 
+#            water = TRUE, watercolor = "lightblue", wateralpha = 0.8, 
+#            waterlinecolor = "lightblue", waterlinealpha = 0.5,
+#            theta = thetavalues[i], phi = 45)
+#  render_snapshot(img_frames[i])
+#  rgl::clear3d()
+#}
+#
+## build gif
+#magick::image_write_gif(magick::image_read(img_frames), 
+#                        path = "montereybay.gif", 
+#                        delay = 6/n_frames)
+#
+## calculate input vectors for gif frames
+#n_frames <- 180
+#waterdepths <- transition_values(from = 0, to = min(montereybay), steps = n_frames) 
+#thetas <- transition_values(from = -45, to = -135, steps = n_frames)
+## generate gif
+#zscale <- 50
+#montereybay %>% 
+#  sphere_shade(texture = "imhof1", zscale = zscale) %>%
+#  add_shadow(ambient_shade(montereybay, zscale = zscale), 0.5) %>%
+#  add_shadow(ray_shade(montereybay, zscale = zscale, lambert = TRUE), 0.5) %>%
+#  save_3d_gif(montereybay, file = "montereybay.gif", duration = 6,
+#              solid = TRUE, shadow = TRUE, water = TRUE, zscale = zscale,
+#              watercolor = "imhof3", wateralpha = 0.8, 
+#              waterlinecolor = "#ffffff", waterlinealpha = 0.5,
+#              waterdepth = waterdepths/zscale, 
+#              theta = thetas, phi = 45)
+#
+#
+#
+#
+### 3D plot with terrain and river
+#zscale <- 10
+#rgl::clear3d()
+#  plot_3d(elev_matrix, zscale = zscale, windowsize = c(1200, 1000),
+#          water = TRUE, soliddepth = -max(elev_matrix)/zscale, wateralpha = 0,
+#          theta = -30, phi = 30, zoom = 0.3, fov = 60)
+#render_snapshot()
+#
