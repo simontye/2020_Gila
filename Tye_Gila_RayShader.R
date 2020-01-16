@@ -33,18 +33,16 @@ setwd("/Users/simontye/Documents/Research/Projects/Gila_River/2020_Gila")
 ###############################################################
 ### Functions
 
-# Download USGS elevation data
-get_usgs_elevation_data <- function(bbox, size = "400,400", file = NULL, 
+# Download USGS elevation data (bbox_1)
+get_usgs_elevation_data_1 <- function(bbox_1, size = "800,800", file = NULL, 
                                     sr_bbox = 4326, sr_image = 4326) {
   require(httr)
-  
-  # TODO - validate inputs
   
   url <- parse_url("https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage")
   res <- GET(
     url, 
     query = list(
-      bbox = paste(bbox$p1$long, bbox$p1$lat, bbox$p2$long, bbox$p2$lat,
+      bbox_1 = paste(bbox_1$p1$long, bbox_1$p1$lat, bbox_1$p2$long, bbox_1$p2$lat,
                    sep = ","),
       bboxSR = sr_bbox,
       imageSR = sr_image,
@@ -65,7 +63,7 @@ get_usgs_elevation_data <- function(bbox, size = "400,400", file = NULL,
     img_res <- GET(body$href)
     img_bin <- content(img_res, "raw")
     if (is.null(file)) 
-      file <- tempfile("elev_matrix", fileext = ".tif")
+      file <- tempfile("elev_1_matrix", fileext = ".tif")
     writeBin(img_bin, file)
     message(paste("image saved to file:", file))
   } else {
@@ -73,19 +71,67 @@ get_usgs_elevation_data <- function(bbox, size = "400,400", file = NULL,
   }
   invisible(file)
 }
- # Read elevation data
-read_elevation_file <- function(file) {
-  elev_img <- raster::raster(file)
-  elev_matrix <- matrix(
-    raster::extract(elev_img, raster::extent(elev_img), buffer = 1000), 
-    nrow = ncol(elev_img), ncol = nrow(elev_img)
+ # Read elevation data (bbox_1)
+read_elevation_file_1 <- function(file) {
+  elev_1_img <- raster::raster(file)
+  elev_1_matrix <- matrix(
+    raster::extract(elev_1_img, raster::extent(elev_1_img), buffer = 1000), 
+    nrow = ncol(elev_1_img), ncol = nrow(elev_1_img)
   )
-  elev_matrix
+  elev_1_matrix
 }
 
-# Downloading a map from ArcGIS API
-get_arcgis_map_image <- function(bbox, map_type = "World_Imagery", file = NULL, 
-                                 width = 400, height = 400, sr_bbox = 4326) {
+# Download USGS elevation data (bbox_2)
+get_usgs_elevation_data_2 <- function(bbox_2, size = "800,800", file = NULL, 
+                                      sr_bbox = 4326, sr_image = 4326) {
+  require(httr)
+  
+  url <- parse_url("https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage")
+  res <- GET(
+    url, 
+    query = list(
+      bbox_2 = paste(bbox_2$p1$long, bbox_2$p1$lat, bbox_2$p2$long, bbox_2$p2$lat,
+                   sep = ","),
+      bboxSR = sr_bbox,
+      imageSR = sr_image,
+      size = size,
+      format = "tiff",
+      pixelType = "F32",
+      noDataInterpretation = "esriNoDataMatchAny",
+      interpolation = "+RSP_BilinearInterpolation",
+      f = "json"
+    )
+  )
+  
+  if (status_code(res) == 200) {
+    body <- content(res, type = "application/json")
+    # TODO - check that bbox values are correct
+    # message(jsonlite::toJSON(body, auto_unbox = TRUE, pretty = TRUE))
+    
+    img_res <- GET(body$href)
+    img_bin <- content(img_res, "raw")
+    if (is.null(file)) 
+      file <- tempfile("elev_2_matrix", fileext = ".tif")
+    writeBin(img_bin, file)
+    message(paste("image saved to file:", file))
+  } else {
+    warning(res)
+  }
+  invisible(file)
+}
+# Read elevation data (bbox_2)
+read_elevation_file_2 <- function(file) {
+  elev_2_img <- raster::raster(file)
+  elev_2_matrix <- matrix(
+    raster::extract(elev_2_img, raster::extent(elev_2_img), buffer = 1000), 
+    nrow = ncol(elev_2_img), ncol = nrow(elev_2_img)
+  )
+  elev_2_matrix
+}
+
+# Download a map from ArcGIS API (bbox_1)
+get_arcgis_map_image_1 <- function(bbox_1, map_type = "World_Imagery", file = NULL, 
+                                 width = 800, height = 800, sr_bbox = 4326) {
   require(httr)
   require(glue) 
   require(jsonlite)
@@ -106,10 +152,10 @@ get_arcgis_map_image <- function(bbox, map_type = "World_Imagery", file = NULL,
     mapOptions = list(
       extent = list(
         spatialReference = list(wkid = jsonlite::unbox(sr_bbox)),
-        xmax = jsonlite::unbox(max(bbox$p1$long, bbox$p2$long)),
-        xmin = jsonlite::unbox(min(bbox$p1$long, bbox$p2$long)),
-        ymax = jsonlite::unbox(max(bbox$p1$lat, bbox$p2$lat)),
-        ymin = jsonlite::unbox(min(bbox$p1$lat, bbox$p2$lat))
+        xmax = jsonlite::unbox(max(bbox_1$p1$long, bbox_1$p2$long)),
+        xmin = jsonlite::unbox(min(bbox_1$p1$long, bbox_1$p2$long)),
+        ymax = jsonlite::unbox(max(bbox_1$p1$lat, bbox_1$p2$lat)),
+        ymin = jsonlite::unbox(min(bbox_1$p1$lat, bbox_1$p2$lat))
       )
     )
   )
@@ -127,7 +173,7 @@ get_arcgis_map_image <- function(bbox, map_type = "World_Imagery", file = NULL,
     body <- content(res, type = "application/json")
     message(jsonlite::toJSON(body, auto_unbox = TRUE, pretty = TRUE))
     if (is.null(file)) 
-      file <- tempfile("overlay_img", fileext = ".png")
+      file <- tempfile("overlay_1_img", fileext = ".png")
     
     img_res <- GET(body$results[[1]]$value$url)
     img_bin <- content(img_res, "raw")
@@ -141,10 +187,81 @@ get_arcgis_map_image <- function(bbox, map_type = "World_Imagery", file = NULL,
 
 ###############################################################
 
-# Define image size variables from bounding box coordinates
-define_image_size <- function(bbox, major_dim = 400) {
+# Download a map from ArcGIS API (bbox_2)
+get_arcgis_map_image_2 <- function(bbox_2, map_type = "World_Imagery", file = NULL, 
+                                   width = 800, height = 800, sr_bbox = 4326) {
+  require(httr)
+  require(glue) 
+  require(jsonlite)
+  
+  url <- parse_url("https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task/execute")
+  
+  # define JSON query parameter
+  web_map_param <- list(
+    baseMap = list(
+      baseMapLayers = list(
+        list(url = jsonlite::unbox(glue("https://services.arcgisonline.com/ArcGIS/rest/services/{map_type}/MapServer",
+                                        map_type = map_type)))
+      )
+    ),
+    exportOptions = list(
+      outputSize = c(width, height)
+    ),
+    mapOptions = list(
+      extent = list(
+        spatialReference = list(wkid = jsonlite::unbox(sr_bbox)),
+        xmax = jsonlite::unbox(max(bbox_2$p1$long, bbox_2$p2$long)),
+        xmin = jsonlite::unbox(min(bbox_2$p1$long, bbox_2$p2$long)),
+        ymax = jsonlite::unbox(max(bbox_2$p1$lat, bbox_2$p2$lat)),
+        ymin = jsonlite::unbox(min(bbox_2$p1$lat, bbox_2$p2$lat))
+      )
+    )
+  )
+  
+  res <- GET(
+    url, 
+    query = list(
+      f = "json",
+      Format = "PNG32",
+      Layout_Template = "MAP_ONLY",
+      Web_Map_as_JSON = jsonlite::toJSON(web_map_param))
+  )
+  
+  if (status_code(res) == 200) {
+    body <- content(res, type = "application/json")
+    message(jsonlite::toJSON(body, auto_unbox = TRUE, pretty = TRUE))
+    if (is.null(file)) 
+      file <- tempfile("overlay_2_img", fileext = ".png")
+    
+    img_res <- GET(body$results[[1]]$value$url)
+    img_bin <- content(img_res, "raw")
+    writeBin(img_bin, file)
+    message(paste("image saved to file:", file))
+  } else {
+    message(res)
+  }
+  invisible(file)
+}
+
+###############################################################
+
+# Define image size variables from bounding box coordinates (bbox_1)
+define_image_1_size <- function(bbox_1, major_dim = 800) {
   # calculate aspect ration (width/height) from lat/long bounding box
-  aspect_ratio <- abs((bbox$p1$long - bbox$p2$long) / (bbox$p1$lat - bbox$p2$lat))
+  aspect_ratio <- abs((bbox_1$p1$long - bbox_1$p2$long) / (bbox_1$p1$lat - bbox_1$p2$lat))
+  # define dimensions
+  img_width <- ifelse(aspect_ratio > 1, major_dim, major_dim*aspect_ratio) %>% round()
+  img_height <- ifelse(aspect_ratio < 1, major_dim, major_dim/aspect_ratio) %>% round()
+  size_str <- paste(img_width, img_height, sep = ",")
+  list(height = img_height, width = img_width, size = size_str)
+}
+
+###############################################################
+
+# Define image size variables from bounding box coordinates (bbox_2)
+define_image_2_size <- function(bbox_2, major_dim = 800) {
+  # calculate aspect ration (width/height) from lat/long bounding box
+  aspect_ratio <- abs((bbox_2$p1$long - bbox_2$p2$long) / (bbox_2$p1$lat - bbox_2$p2$lat))
   # define dimensions
   img_width <- ifelse(aspect_ratio > 1, major_dim, major_dim*aspect_ratio) %>% round()
   img_height <- ifelse(aspect_ratio < 1, major_dim, major_dim/aspect_ratio) %>% round()
@@ -199,7 +316,7 @@ save_3d_gif <- function(hillshade, heightmap, file, duration = 5, ...) {
   # build gif
   message("Generating .gif...")
   magick::image_write_gif(magick::image_read(img_frames), path = file, delay = duration/n_frames)
-  message("Done!")
+  message("You did the thing!")
   invisible(file)
 }
 
@@ -268,61 +385,117 @@ transition_values <- function(from, to, steps = 10, one_way = FALSE, type = "cos
 ### Rayshader - Full version
 ###############################################################
 
-## Define bounding box (channels only)
+### Channels
+## Define bounding box (Channels)
 #bbox <- list(
 #  p1 = list(long = -108.627, lat = 32.923), # bottom left
 #  p2 = list(long = -108.514, lat = 33.071) # top right
 #)
 
-## Define bounding box (video version)
-#bbox <- list(
-#  p1 = list(long = -108.627, lat = 32.923), # bottom left
-#  p2 = list(long = -108.401, lat = 33.219) # top right
-#)
+### Video: Intro
+# Define bounding box (Video: Intro)
+bbox_1 <- list(
+  p1 = list(long = -109.434, lat = 32.157), # bottom left
+  p2 = list(long = -107.604, lat = 33.957) # top right
+)
 
-# Define bounding box (video version)
-bbox <- list(
-  p1 = list(long = -108.677, lat = 32.873), # bottom left
-  p2 = list(long = -108.351, lat = 33.269) # top right
+#### Center of -108.519, 33.057
+
+# Display bounding box
+leaflet() %>%
+  addTiles() %>% 
+  addRectangles(
+    lng1 = bbox_1$p1$long, lat1 = bbox_1$p1$lat,
+    lng2 = bbox_1$p2$long, lat2 = bbox_1$p2$lat,
+    fillColor = "transparent"
+  ) %>%
+  fitBounds(
+    lng1 = bbox_1$p1$long, lat1 = bbox_1$p1$lat,
+    lng2 = bbox_1$p2$long, lat2 = bbox_1$p2$lat,
+  )
+
+# Define image size
+image_1_size <- define_image_1_size(bbox_1, major_dim = 800)
+
+# Download elevation data
+elev_1 <- file.path("bbox_1.tif")
+get_usgs_elevation_data_1(bbox_1,
+                        size = image_1_size$size,
+                        file = elev_1,
+                        sr_bbox = 4326,
+                        sr_image = 4326)
+
+# Load elevation data
+elev_1_img    <- raster(elev_1)
+elev_1_matrix <- matrix(
+  raster::extract(elev_1_img, raster::extent(elev_1_img), buffer = 1000), 
+  nrow = ncol(elev_1_img), ncol = nrow(elev_1_img)
+)
+
+# Define shadow layers
+ambmat_1 <- ambient_shade(elev_1_matrix, zscale = 30)
+raymat_1 <- ray_shade(elev_1_matrix, zscale = 30, lambert = TRUE)
+
+# Overlay satellite image
+overlay_1 <- "bbox_1.png"
+get_arcgis_map_image(bbox_1,
+                     map_type = "World_Imagery",
+                     file = overlay_1,
+                     width = image_1_size$width,
+                     height = image_1_size$height, 
+                     sr_bbox = 4326)
+overlay_1_img <- png::readPNG(overlay_1)
+
+### Video: Outro
+# Define bounding box (Video)
+bbox_2 <- list(
+  p1 = list(long = -108.824, lat = 32.757), # bottom left
+  p2 = list(long = -108.214, lat = 33.357) # top right
 )
 
 # Display bounding box
 leaflet() %>%
   addTiles() %>% 
   addRectangles(
-    lng1 = bbox$p1$long, lat1 = bbox$p1$lat,
-    lng2 = bbox$p2$long, lat2 = bbox$p2$lat,
+    lng1 = bbox_2$p1$long, lat1 = bbox_2$p1$lat,
+    lng2 = bbox_2$p2$long, lat2 = bbox_2$p2$lat,
     fillColor = "transparent"
   ) %>%
   fitBounds(
-    lng1 = bbox$p1$long, lat1 = bbox$p1$lat,
-    lng2 = bbox$p2$long, lat2 = bbox$p2$lat,
+    lng1 = bbox_2$p1$long, lat1 = bbox_2$p1$lat,
+    lng2 = bbox_2$p2$long, lat2 = bbox_2$p2$lat,
   )
+
 # Define image size
-image_size <- define_image_size(bbox, major_dim = 400)
+image_2_size <- define_image_2_size(bbox_2, major_dim = 800)
 
 # Download elevation data
-elev_file <- file.path("sf-elevation.tif")
-get_usgs_elevation_data(bbox, size = image_size$size, file = elev_file,
+elev_2 <- file.path("bbox_2.tif")
+get_usgs_elevation_data_2(bbox_2,
+                        size = image_2_size$size,
+                        file = elev_2,
                         sr_bbox = 4326, sr_image = 4326)
 
 # Load elevation data
-elev_img <- raster(elev_file)
-elev_matrix <- matrix(
-  raster::extract(elev_img, raster::extent(elev_img), buffer = 1000), 
-  nrow = ncol(elev_img), ncol = nrow(elev_img)
+elev_2_img <- raster(elev_2)
+elev_2_matrix <- matrix(
+  raster::extract(elev_2_img, raster::extent(elev_2_img), buffer = 1000), 
+  nrow = ncol(elev_2_img), ncol = nrow(elev_2_img)
 )
 
 # Define shadow layers
-ambmat <- ambient_shade(elev_matrix, zscale = 30)
-raymat <- ray_shade(elev_matrix, zscale = 30, lambert = TRUE)
+ambmat_2 <- ambient_shade(elev_2_matrix, zscale = 30)
+raymat_2 <- ray_shade(elev_2_matrix, zscale = 30, lambert = TRUE)
 
 # Overlay satellite image
-overlay_file <- "terrain.png"
-get_arcgis_map_image(bbox, map_type = "World_Imagery", file = overlay_file,
-                     width = image_size$width, height = image_size$height, 
+overlay_2 <- "terrain.png"
+get_arcgis_map_image(bbox_2,
+                     map_type = "World_Imagery",
+                     file = overlay_2,
+                     width = image_2_size$width,
+                     height = image_2_size$height, 
                      sr_bbox = 4326)
-overlay_img <- png::readPNG(overlay_file)
+overlay_2_img <- png::readPNG(overlay_2)
 
 ###############################################################
 
@@ -371,10 +544,10 @@ river.2016 <- spTransform(river.2016, CRS("+proj=longlat +datum=WGS84 +no_defs +
 
 # Create empty raster
 r         = raster()
-extent(r) = extent(elev_img)
-dim(r)    = dim(elev_img)
-res(r)    = res(elev_img)
-crs(r)    = crs(elev_img)
+extent(r) = extent(elev_2_img)
+dim(r)    = dim(elev_2_img)
+res(r)    = res(elev_2_img)
+crs(r)    = crs(elev_2_img)
 values(r) = 0
 
 # Resample raster file to lower resolution
@@ -462,48 +635,93 @@ water.2016 = apply(water.2016, 2, rev)
 #dim(water) == dim(elev_matrix)
 
 # 2D plot with terrain and river
-elev_matrix %>%
-  sphere_shade(texture = "desert") %>%
-  add_overlay(overlay_img, alphalayer = 0.8) %>%
-  add_water(water.1935, color = "#5e4fa2") %>%
-  add_water(water.1950, color = "#3288bd") %>%
-  add_water(water.1965, color = "#66c2a5") %>%
-  add_water(water.1974, color = "#abdda4") %>%
-  #add_water(water.1980, color = "blueviolet") %>%
-  add_water(water.1982, color = "#e6f598") %>%
-  add_water(water.1986, color = "#ffffbf") %>%
-  add_water(water.1986, color = "#fee08b") %>%
-  add_water(water.2006, color = "#fdae61") %>%
-  add_water(water.2009, color = "#f46d43") %>%
-  add_water(water.2014, color = "#d53e4f") %>%
-  add_water(water.2016, color = "#9e0142") %>%
-  add_shadow(raymat, max_darken = 0.5) %>%
-  add_shadow(ambmat, max_darken = 0.5) %>%
-  plot_3d(elev_matrix, theta =-30, zscale = 10)
+#elev_matrix %>%
+#  sphere_shade(texture = "desert") %>%
+#  add_overlay(overlay_img, alphalayer = 0.8) %>%
+#  add_water(water.1935, color = "#5e4fa2") %>%
+#  add_water(water.1950, color = "#3288bd") %>%
+#  add_water(water.1965, color = "#66c2a5") %>%
+#  add_water(water.1974, color = "#abdda4") %>%
+#  #add_water(water.1980, color = "blueviolet") %>%
+#  add_water(water.1982, color = "#e6f598") %>%
+#  add_water(water.1986, color = "#ffffbf") %>%
+#  add_water(water.1986, color = "#fee08b") %>%
+#  add_water(water.2006, color = "#fdae61") %>%
+#  add_water(water.2009, color = "#f46d43") %>%
+#  add_water(water.2014, color = "#d53e4f") %>%
+#  add_water(water.2016, color = "#9e0142") %>%
+#  add_shadow(raymat, max_darken = 0.5) %>%
+#  add_shadow(ambmat, max_darken = 0.5) %>%
+#  plot_map()
 
 #rgl::clear3d()
 
 ###############################################################
-### GIF
+### Interactive map
 
-# Animation settings
-n_frames <- 10
-theta <- transition_values(from = -35, to = -35, steps = n_frames, 
+### Intro GIF
+# Settings
+n_frames <- 5
+theta <- transition_values(from = 108, to = 328, steps = n_frames, 
                            one_way = TRUE, type = "lin")
-phi <- transition_values(from = 15, to = 15, steps = n_frames, 
+phi <- transition_values(from = 15, to = 50, steps = n_frames, 
                          one_way = TRUE, type = "cos")
-zoom <- transition_values(from = 0.1, to = 0.4, steps = n_frames, 
+zoom <- transition_values(from = 0.16, to = 0.04, steps = n_frames, 
                           one_way = TRUE, type = "cos")
 
-# Test
-elev_matrix %>%
+# GIF
+elev_1_matrix %>%
   sphere_shade(texture = "desert") %>%
-  add_overlay(overlay_img, alphalayer = 0.8) %>%
+  add_overlay(overlay_1_img, alphalayer = 0.9) %>%
+  #add_water(water.1935, color = "#5e4fa2") %>%
+  #add_water(water.1950, color = "#3288bd") %>%
+  #add_water(water.1965, color = "#66c2a5") %>%
+  #add_water(water.1974, color = "#abdda4") %>%
+  #add_water(water.1982, color = "#e6f598") %>%
+  #add_water(water.1986, color = "#ffffbf") %>%
+  #add_water(water.1986, color = "#fee08b") %>%
+  #add_water(water.2006, color = "#fdae61") %>%
+  #add_water(water.2009, color = "#f46d43") %>%
+  #add_water(water.2014, color = "#d53e4f") %>%
+  add_water(water.2016, color = "#3288bd") %>%
+  add_shadow(raymat_1, max_darken = 0.6) %>%
+  add_shadow(ambmat_2, max_darken = 0.6) %>%
+  save_3d_gif(elev_1_matrix,
+              file = "Gila_Rayshader_1.gif",
+              duration = 15,
+              zscale = 30,
+              windowsize = c(1000, 1000),
+              water = FALSE,
+              soliddepth = -max(elev_1_matrix)/1000, 
+              theta = theta,
+              phi = phi,
+              zoom = zoom,
+              fov = 100)
+
+### Outro GIF (bbox_2)
+# Settings
+n_frames <- 5
+theta <- transition_values(from = 328, to = 313, steps = n_frames, 
+                           one_way = TRUE, type = "lin")
+phi <- transition_values(from = 50, to = 65, steps = n_frames, 
+                         one_way = TRUE, type = "cos")
+zoom <- transition_values(from = 0.04, to = 0.14, steps = n_frames, 
+                          one_way = TRUE, type = "cos")
+
+theta <- transition_values(from = 328, to = 313, steps = n_frames, 
+                           one_way = TRUE, type = "lin")
+phi <- transition_values(from = 50, to = 10, steps = n_frames, 
+                         one_way = TRUE, type = "cos")
+zoom <- transition_values(from = 0.04, to = 0.10, steps = n_frames, 
+                          one_way = TRUE, type = "cos")
+# GIF
+elev_2_matrix %>%
+  sphere_shade(texture = "desert") %>%
+  add_overlay(overlay_2_img, alphalayer = 0.9) %>%
   add_water(water.1935, color = "#5e4fa2") %>%
   add_water(water.1950, color = "#3288bd") %>%
   add_water(water.1965, color = "#66c2a5") %>%
   add_water(water.1974, color = "#abdda4") %>%
-  #add_water(water.1980, color = "blueviolet") %>%
   add_water(water.1982, color = "#e6f598") %>%
   add_water(water.1986, color = "#ffffbf") %>%
   add_water(water.1986, color = "#fee08b") %>%
@@ -511,73 +729,19 @@ elev_matrix %>%
   add_water(water.2009, color = "#f46d43") %>%
   add_water(water.2014, color = "#d53e4f") %>%
   add_water(water.2016, color = "#9e0142") %>%
-  add_shadow(raymat, max_darken = 0.5) %>%
-  add_shadow(ambmat, max_darken = 0.5) %>%
-  save_3d_gif(elev_matrix, file = "gila.gif", duration = 6,
-              zscale = 20, windowsize = c(1000, 1000), wateralpha = 0,
-              water = TRUE, soliddepth = -max(elev_matrix)/1000, 
-              theta = theta, phi = phi, zoom = zoom, fov = 60)
+  add_shadow(raymat_2, max_darken = 0.6) %>%
+  add_shadow(ambmat_2, max_darken = 0.6) %>%
+  save_3d_gif(elev_2_matrix,
+              file = "Gila_Rayshader_2.gif",
+              duration = 15,
+              zscale = 30,
+              windowsize = c(1000, 1000),
+              water = FALSE,
+              soliddepth = -max(elev_2_matrix)/1000, 
+              theta = theta,
+              phi = phi,
+              zoom = zoom,
+              fov = 100)
 
 
 
-# # montery water gif ====
-##elev_matrix <- montereybay
-#n_frames <- 180
-#zscale <- 50
-#
-## frame transition variables
-##waterdepthvalues <- min(elev_matrix)/2 - min(elev_matrix)/2 * cos(seq(0,2*pi,length.out = n_frames))
-#thetavalues <- -90 + 45 * cos(seq(0, 2*pi, length.out = n_frames))
-## shadow layers
-#ambmat <- ambient_shade(elev_matrix, zscale = zscale)
-#raymat <- ray_shade(elev_matrix, zscale = zscale, lambert = TRUE)
-#
-## generate .png frame images
-#img_frames <- paste0("drain", seq_len(n_frames), ".png")
-#for (i in seq_len(frames)) {
-#  message(paste(" - image", i, "of", n_frames))
-#  elev_matrix %>%
-#    sphere_shade(texture = "imhof1") %>%
-#    add_shadow(ambmat, 0.5) %>%
-#    add_shadow(raymat, 0.5) %>%
-#    plot_3d(elev_matrix, solid = TRUE, shadow = TRUE, zscale = zscale, 
-#            water = TRUE, watercolor = "lightblue", wateralpha = 0.8, 
-#            waterlinecolor = "lightblue", waterlinealpha = 0.5,
-#            theta = thetavalues[i], phi = 45)
-#  render_snapshot(img_frames[i])
-#  rgl::clear3d()
-#}
-#
-## build gif
-#magick::image_write_gif(magick::image_read(img_frames), 
-#                        path = "montereybay.gif", 
-#                        delay = 6/n_frames)
-#
-## calculate input vectors for gif frames
-#n_frames <- 180
-#waterdepths <- transition_values(from = 0, to = min(montereybay), steps = n_frames) 
-#thetas <- transition_values(from = -45, to = -135, steps = n_frames)
-## generate gif
-#zscale <- 50
-#montereybay %>% 
-#  sphere_shade(texture = "imhof1", zscale = zscale) %>%
-#  add_shadow(ambient_shade(montereybay, zscale = zscale), 0.5) %>%
-#  add_shadow(ray_shade(montereybay, zscale = zscale, lambert = TRUE), 0.5) %>%
-#  save_3d_gif(montereybay, file = "montereybay.gif", duration = 6,
-#              solid = TRUE, shadow = TRUE, water = TRUE, zscale = zscale,
-#              watercolor = "imhof3", wateralpha = 0.8, 
-#              waterlinecolor = "#ffffff", waterlinealpha = 0.5,
-#              waterdepth = waterdepths/zscale, 
-#              theta = thetas, phi = 45)
-#
-#
-#
-#
-### 3D plot with terrain and river
-#zscale <- 10
-#rgl::clear3d()
-#  plot_3d(elev_matrix, zscale = zscale, windowsize = c(1200, 1000),
-#          water = TRUE, soliddepth = -max(elev_matrix)/zscale, wateralpha = 0,
-#          theta = -30, phi = 30, zoom = 0.3, fov = 60)
-#render_snapshot()
-#
